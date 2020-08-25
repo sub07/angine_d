@@ -15,5 +15,9 @@
 		"GLFW_33",
 		"FT_27"
 	],
-	"targetPath": "bin"
+	"targetPath": "bin",
+	"targetType": "executable",
+	"sourcePaths": [
+		"angine"
+	]
 }
