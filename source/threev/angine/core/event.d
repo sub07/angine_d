@@ -1,6 +1,6 @@
-module angine.core.event;
+module threev.angine.core.event;
 
-import angine.maths.vec;
+import threev.angine.maths.vec;
 
 enum Key {
     Unknown,

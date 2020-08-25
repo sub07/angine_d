@@ -1,4 +1,4 @@
-module angine.maths.vec;
+module threev.angine.maths.vec;
 
 import std.math;
 import std.format;

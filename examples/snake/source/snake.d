@@ -1,19 +1,11 @@
 module snake;
 
 import std.stdio;
-import angine.graphics.primitive;
 import bindbc.glfw;
 import std.string;
 import core.stdc.stdlib : malloc, free;
-import bindbc.freetype;
-import angine.graphics.color;
-import angine.graphics.batch;
-import angine.graphics.image;
-import angine.maths.vec;
-import angine.maths.rect;
+import threev.angine;
 import std.math;
-import angine.graphics.subtexture;
-import angine.graphics.font;
 import std.random;
 import std.container;
 import std.exception;

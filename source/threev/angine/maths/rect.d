@@ -1,4 +1,4 @@
-module angine.maths.rect;
+module threev.angine.maths.rect;
 
 struct Rect {
     float x = 0;

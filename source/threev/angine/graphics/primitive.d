@@ -1,4 +1,4 @@
-module angine.graphics.primitive;
+module threev.angine.graphics.primitive;
 
 
 import std.string;

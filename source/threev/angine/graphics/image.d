@@ -1,7 +1,7 @@
-module angine.graphics.image;
+module threev.angine.graphics.image;
 
 import imaged;
-import angine.graphics.color;
+import threev.angine.graphics.color;
 
 enum PixelFormat {
     R8 = 1,

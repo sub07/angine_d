@@ -1,7 +1,7 @@
-module angine.graphics.subtexture;
+module threev.angine.graphics.subtexture;
 
-public import angine.graphics.primitive;
-import angine.maths.rect;
+import threev.angine.graphics.primitive;
+import threev.angine.maths.rect;
 
 SubTexture subTextureOf(Texture t, Rect r) {
     return SubTexture(t, r);

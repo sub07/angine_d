@@ -1,7 +1,7 @@
-module angine.core.scene;
+module threev.angine.core.scene;
 
-import angine.maths.vec;
-public import angine.core.event;
+import threev.angine.maths.vec;
+import threev.angine.core.event;
 import std.container;
 
 struct FrameInfo {

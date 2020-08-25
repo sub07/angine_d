@@ -1,11 +1,11 @@
-module angine.graphics.font;
+module threev.angine.graphics.font;
 
-import angine.graphics.primitive;
-import angine.maths.rect;
-import angine.maths.vec;
+import threev.angine.graphics.primitive;
+import threev.angine.maths.rect;
+import threev.angine.maths.vec;
 import std.string;
 import bindbc.freetype;
-import angine.graphics.image;
+import threev.angine.graphics.image;
 import std.stdio;
 import std.typecons;
 

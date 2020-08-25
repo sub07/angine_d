@@ -1,7 +1,7 @@
-module angine.graphics.mesh;
+module threev.angine.graphics.mesh;
 
 
-import angine.graphics.primitive;
+import threev.angine.graphics.primitive;
 import core.stdc.string;
 import std.format;
 import std.stdio;

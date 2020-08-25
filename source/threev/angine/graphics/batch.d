@@ -1,13 +1,13 @@
-module angine.graphics.batch;
+module threev.angine.graphics.batch;
 
-import angine.graphics.primitive;
-import angine.graphics.color;
-import angine.graphics.mesh;
-import angine.maths.vec;
-import angine.maths.rect;
+import threev.angine.graphics.primitive;
+import threev.angine.graphics.color;
+import threev.angine.graphics.mesh;
+import threev.angine.maths.vec;
+import threev.angine.maths.rect;
 import std.stdio;
-import angine.graphics.subtexture;
-import angine.graphics.font;
+import threev.angine.graphics.subtexture;
+import threev.angine.graphics.font;
 
 class TextureBatch {
     private bool transparency_enabled = false;
