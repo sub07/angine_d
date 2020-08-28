@@ -31,46 +31,54 @@ struct Vec {
     float x = 0;
     float y = 0;
 
-    this(float x, float y) nothrow {
+    this(float x, float y) {
         this.x = x;
         this.y = y;
     }
 
-    this(Vec v) nothrow {
+    this(Vec v) {
         x = v.x;
         y = v.y;
     }
 
-    this(float xy) nothrow {
+    this(float xy) {
         x = xy;
         y = xy;
     }
 
-    @property float w() inout nothrow {
+    @property int i() {
+        return cast(int) x;
+    }
+
+    @property int j() {
+        return cast(int) y;
+    }
+
+    @property float w() inout {
         return x;
     }
 
-    @property float h() inout nothrow {
+    @property float h() inout {
         return y;
     }
 
-    @property void w(float w) nothrow {
+    @property void w(float w) {
         x = w;
     }
 
-    @property void h(float h) nothrow {
+    @property void h(float h) {
         y = h;
     }
 
-    public inout(Vec) opBinary(string op)(inout(Vec) rhs) inout {
+    public Vec opBinary(string op)(Vec rhs) {
         return mixin("Vec(x" ~ op ~ "rhs.x, y" ~ op ~ "rhs.y)");
     }
 
-    public inout(Vec) opBinary(string op)(inout(float) rhs) inout {
+    public Vec opBinary(string op)(float rhs) {
         return mixin("Vec(x" ~ op ~ "rhs, y" ~ op ~ "rhs)");
     }
 
-    string toString() inout {
+    string toString() const {
         return format("(%f, %f)", x, y);
     }
 
@@ -80,7 +88,7 @@ struct Vec {
         return this;
     }
 
-    bool opEquals(const Vec other) const nothrow {
+    bool opEquals(const Vec other) const {
         return x == other.x && y == other.y;
     }
 
@@ -88,44 +96,44 @@ struct Vec {
         return cast(size_t)(13 * x + 11 * y);
     }
 
-    float norm() immutable {
+    float norm() {
         return sqrt(x * x + y * y);
     }
 
-    Vec middle(Vec v) immutable {
+    Vec middle(Vec v) {
         return Vec((x + v.x) / 2, (y + v.y) / 2);
     }
 
-    Vec normalize() immutable {
+    Vec normalize() {
         immutable n = norm();
         return Vec(x / n, y / n);
     }
 
-    Vec normal() immutable {
+    Vec normal() {
         return Vec(y, -x);
     }
 
-    float dist(Vec v) immutable {
-        immutable sub = this - v;
+    float dist(Vec v) {
+        auto sub = this - v;
         return sub.norm();
     }
 
-    float dist2(Vec v) immutable {
+    float dist2(Vec v) {
         immutable sub = this - v;
         return sub.x * sub.x + sub.y * sub.y;
     }
 
-    float det(Vec v) immutable {
+    float det(Vec v) {
         return x * v.y - y * v.x;
     }
 
-    float dot(Vec v) immutable {
+    float dot(Vec v) {
         return x * v.x + y * v.y;
     }
 
-    Vec rotated(float val) immutable {
-        immutable new_x = cos(val) * x - sin(val) * y;
-        immutable new_y = sin(val) * x + cos(val) * y;
+    Vec rotated(float val) {
+        auto new_x = cos(val) * x - sin(val) * y;
+        auto new_y = sin(val) * x + cos(val) * y;
         return Vec(new_x, new_y);
     }
 

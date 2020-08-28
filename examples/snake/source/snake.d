@@ -106,7 +106,7 @@ Orientation randomOrientation() {
 	}
 }
 
-Vec vecFromOrientation(Orientation o) nothrow {
+Vec vecFromOrientation(Orientation o) {
 	final switch (o) {
 	case Orientation.North:
 		return Vec(0, -1);
@@ -201,12 +201,12 @@ final class Snake {
 		growSnake();
 	}
 
-	void growSnake() nothrow {
+	void growSnake() {
 		snake ~= SnakePart(false, tail.pos, tail.o);
 		tail.pos -= vecFromOrientation(tail.o);
 	}
 
-	private void adjustOrientation() nothrow {
+	private void adjustOrientation() {
 		immutable beforeLast = snakeBeforeLast();
 		tail.o = beforeLast.o;
 
@@ -295,11 +295,11 @@ final class Snake {
 	double timeAcc = 0;
 	double tickInterval = 0.4;
 
-	ref SnakePart snakeSecond() nothrow {
+	ref SnakePart snakeSecond() {
 		return snake.empty ? tail : snake.front();
 	}
 
-	SnakePart snakeBeforeLast() nothrow {
+	SnakePart snakeBeforeLast() {
 		return snake.empty ? head : snake.back();
 	}
 
