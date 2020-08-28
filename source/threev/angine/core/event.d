@@ -116,7 +116,8 @@ enum MouseButton {
 
 enum ActionState {
     Pressed,
-    Released
+    Released,
+    Repeated
 }
 
 struct EventState {

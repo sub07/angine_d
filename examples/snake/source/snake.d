@@ -1,9 +1,7 @@
 module snake;
 
 import std.stdio;
-import bindbc.glfw;
 import std.string;
-import core.stdc.stdlib : malloc, free;
 import threev.angine;
 import std.math;
 import std.random;
@@ -11,6 +9,7 @@ import std.container;
 import std.exception;
 import std.conv;
 import std.format;
+import std.functional;
 
 immutable vTex = `
 #version 460
@@ -304,7 +303,7 @@ final class Snake {
 		return snake.empty ? head : snake.back();
 	}
 
-	void retry() nothrow {
+	void retry() {
 		gameOver = false;
 		score = 0;
 		snake.clear();
@@ -363,70 +362,69 @@ final class Snake {
 	}
 }
 
-extern (C) void keyCallback(GLFWwindow* w, int key, int scancode, int action, int mods) nothrow {
-	Snake* s = cast(Snake*) glfwGetWindowUserPointer(w);
-	if (action == GLFW_PRESS) {
-		if (key == GLFW_KEY_SPACE) {
-			s.pause = !s.pause;
-		}
-		if (key == GLFW_KEY_UP) {
-			immutable second = s.snakeSecond();
-			if (second.o != Orientation.South) {
-				s.head.o = Orientation.North;
+class EventManager {
+	Snake s;
+	void keyCallback(Key key, ActionState action, Modifiers m) {
+		if (action == ActionState.Pressed) {
+			if (key == Key.Space) {
+				s.pause = !s.pause;
 			}
-		}
-		if (key == GLFW_KEY_DOWN) {
-			immutable second = s.snakeSecond();
-			if (second.o != Orientation.North) {
-				s.head.o = Orientation.South;
+			if (key == Key.Up) {
+				immutable second = s.snakeSecond();
+				if (second.o != Orientation.South) {
+					s.head.o = Orientation.North;
+				}
 			}
-		}
-		if (key == GLFW_KEY_LEFT) {
-			immutable second = s.snakeSecond();
-			if (second.o != Orientation.East) {
-				s.head.o = Orientation.West;
+			if (key == Key.Down) {
+				immutable second = s.snakeSecond();
+				if (second.o != Orientation.North) {
+					s.head.o = Orientation.South;
+				}
 			}
-		}
-		if (key == GLFW_KEY_RIGHT) {
-			immutable second = s.snakeSecond();
-			if (second.o != Orientation.West) {
-				s.head.o = Orientation.East;
+			if (key == Key.Left) {
+				immutable second = s.snakeSecond();
+				if (second.o != Orientation.East) {
+					s.head.o = Orientation.West;
+				}
 			}
-		}
-		if (key == GLFW_KEY_R) {
-			s.retry();
+			if (key == Key.Right) {
+				immutable second = s.snakeSecond();
+				if (second.o != Orientation.West) {
+					s.head.o = Orientation.East;
+				}
+			}
+			if (key == Key.R && s.gameOver) {
+				s.retry();
+			}
 		}
 	}
 }
 
 void main() {
-	loadGLFW();
-	glfwInit();
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-	auto w = glfwCreateWindow(cast(int) screenSize.x, cast(int) screenSize.y, "t", null, null);
-	glfwMakeContextCurrent(w);
+	immutable conf = WindowConfig(cast(int) screenSize.x, cast(int) screenSize.y, "t", false);
+	auto eventManager = new EventManager();
+	immutable callbacks = WindowEventCallbacks(&eventManager.keyCallback);
+	Window w = new GLFWWindow(conf, callbacks);
 
-	Gl context = loadGlFromLoader(x => glfwGetProcAddress(x));
+	Gl context = loadGlFromLoader(w.loader());
 	writeln(context.glVersion);
 	context.setClearColor(0, 0, 0, 1.0);
 
 	Snake game = new Snake();
 
-	glfwSetWindowUserPointer(w, &game);
-	glfwSetKeyCallback(w, &keyCallback);
+	eventManager.s = game;
 
-	double last = glfwGetTime();
+	double last = now();
 
-	while (!glfwWindowShouldClose(w)) {
-		glfwPollEvents();
-		immutable dt = glfwGetTime() - last;
-		last = glfwGetTime();
+	while (!w.shouldClose()) {
+		w.pollEvent();
+		immutable dt = now() - last;
+		last = now();
 
 		context.clearScreen();
 		game.loop(dt);
 
-		glfwSwapBuffers(w);
+		w.swapBuffers();
 	}
-	glfwTerminate();
-	unloadGLFW();
+	destroy(w);
 }

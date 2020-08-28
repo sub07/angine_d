@@ -22,7 +22,32 @@ abstract class Scene {
     // Behaviour
     public void update(FrameInfo info);
     public void draw(FrameInfo info);
-    public void event(FrameInfo info, Event event);
+    public void keyDown(Key k, Modifiers mods) {
+    }
+
+    public void onKeyDown(Key k, Modifiers mods) {
+    }
+
+    public void onKeyUp(Key k, Modifiers mods) {
+    }
+
+    public void onMouseMove(Vec pos, Modifiers mods) {
+    }
+
+    public void onMouseScroll(Vec pos, Modifiers mods) {
+    }
+
+    public void mouseDown(MouseButton b, Modifiers m) {
+    }
+
+    public void onMouseDown(MouseButton b, Modifiers m) {
+    }
+
+    public void onMouseUp(MouseButton b, Modifiers m) {
+    }
+
+    public void onWindowResize(Vec size) {
+    }
 
     // User capabilities
     protected void exit();
