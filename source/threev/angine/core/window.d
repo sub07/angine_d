@@ -7,8 +7,11 @@ import threev.angine.core.event;
 struct WindowConfig {
     int width = 800;
     int height = 600;
-    string title = "Title";
+    string appName = "Title";
     bool resizable = true;
+    bool vsync = true;
+    bool fullscreen = false;
+    int monitorIndex = 0;
 }
 
 alias KeyCallback = void delegate(Key, ActionState, Modifiers);
@@ -41,9 +44,28 @@ class GLFWWindow : Window {
 
         this.callbacks = callbacks;
         glfwInit();
+
         glfwWindowHint(GLFW_RESIZABLE, config.resizable ? GLFW_TRUE : GLFW_FALSE);
-        handle = glfwCreateWindow(config.width, config.height,
-                toStringz(config.title), null, null);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+
+        GLFWmonitor* monitor = getMonitorFromIndex(config.monitorIndex);
+        if (config.fullscreen) {
+            if (config.width == 0 && config.height == 0) {
+                int width, height;
+                glfwGetMonitorWorkarea(monitor, null, null, &width, &height);
+                handle = glfwCreateWindow(width, height, toStringz(config.appName), monitor, null);
+            } else {
+                handle = glfwCreateWindow(config.width, config.height,
+                        toStringz(config.appName), monitor, null);
+            }
+        } else {
+            handle = glfwCreateWindow(config.width, config.height,
+                    toStringz(config.appName), null, null);
+        }
+
+        glfwSwapInterval(config.vsync ? 1 : 0);
+
         glfwMakeContextCurrent(handle);
         glfwSetWindowUserPointer(handle, cast(void*) this);
         glfwSetKeyCallback(handle, &keyCallback);
@@ -343,5 +365,13 @@ class GLFWWindow : Window {
         default:
             return Key.Unknown;
         }
+    }
+
+    private static GLFWmonitor* getMonitorFromIndex(int index) {
+        int count;
+        GLFWmonitor** monitors = glfwGetMonitors(&count);
+        if (index < 0 || index >= count)
+            return glfwGetPrimaryMonitor();
+        return monitors[index];
     }
 }

@@ -161,7 +161,7 @@ final class Snake {
 
 	Font courier;
 
-	Vec centeringOffset = screenSize / 2 - (cellSize * gridSize) / 2;
+	Vec centeringOffset;
 	auto snake = Array!SnakePart();
 
 	SnakePart head;
@@ -174,14 +174,18 @@ final class Snake {
 	bool gameOver = false;
 	bool pause = false;
 
-	this() {
+	Window window;
+
+	this(Window w) {
+		window = w;
+		centeringOffset = Vec(w.width, w.height) / 2 - (cellSize * gridSize) / 2;
 		apple = randomApplePos();
 		snakeImg = new Image("assets/snake.png");
 		textureShader = new Shader(vTex, fTex);
 		textShader = new Shader(vTex, fText);
-		courier = new Font("assets/courier.ttf", 20);
-		textureShader.sendVec2("viewportSize", screenSize.x, screenSize.y);
-		textShader.sendVec2("viewportSize", screenSize.x, screenSize.y);
+		courier = new Font("assets/courier.ttf", 40);
+		textureShader.sendVec2("viewportSize", w.width, w.height);
+		textShader.sendVec2("viewportSize", w.width, w.height);
 		batch = new TextureBatch(1000, textureShader, textShader);
 		batch.transparency = true;
 		snakeTex = new Texture(TextureFilter.Nearest, snakeImg.width,
@@ -342,21 +346,22 @@ final class Snake {
 		batch.drawTexture(appleTex, apple * cellSize + centeringOffset);
 
 		if (gameOver) {
-			batch.drawTexture(gameOverRect, Vec(), screenSize);
+			batch.drawTexture(gameOverRect, Vec(), Vec(window.width, window.height));
 			Vec gameOverStringSize = courier.stringSize("GAME OVER ! (Press R to retry)");
-			batch.drawString(courier, "GAME OVER ! (Press R to retry)",
-					Color.white, screenSize / 2 - gameOverStringSize / 2);
+			batch.drawString(courier, "GAME OVER ! (Press R to retry)", Color.white,
+					Vec(window.width, window.height) / 2 - gameOverStringSize / 2);
 		}
 
 		if (pause && !gameOver) {
-			batch.drawTexture(gameOverRect, Vec(), screenSize);
-			Vec gameOverStringSize = courier.stringSize("PAUSE");
-			batch.drawString(courier, "PAUSE", Color.white, screenSize / 2 - gameOverStringSize / 2);
+			batch.drawTexture(gameOverRect, Vec(), Vec(window.width, window.height));
+			Vec pauseStringSize = courier.stringSize("PAUSE");
+			batch.drawString(courier, "PAUSE", Color.white, Vec(window.width,
+					window.height) / 2 - pauseStringSize / 2);
 		}
 
 		Vec scoreStringSize = courier.stringSize(format("Score: %s", score));
 		batch.drawString(courier, format("Score: %s", score),
-				Vec(screenSize.x / 2 - scoreStringSize.x / 2, 10));
+				Vec(window.width / 2 - scoreStringSize.x / 2, 10));
 
 		batch.end();
 	}
@@ -401,7 +406,8 @@ class EventManager {
 }
 
 void main() {
-	immutable conf = WindowConfig(cast(int) screenSize.x, cast(int) screenSize.y, "t", false);
+	immutable conf = WindowConfig(0, 0, "Snake", false, true, true, 0);
+	// immutable conf = WindowConfig(screenSize.i, screenSize.j, "Snake", false, true, true, 1);
 	auto eventManager = new EventManager();
 	immutable callbacks = WindowEventCallbacks(&eventManager.keyCallback);
 	Window w = new GLFWWindow(conf, callbacks);
@@ -410,7 +416,7 @@ void main() {
 	writeln(context.glVersion);
 	context.setClearColor(0, 0, 0, 1.0);
 
-	Snake game = new Snake();
+	Snake game = new Snake(w);
 
 	eventManager.s = game;
 
