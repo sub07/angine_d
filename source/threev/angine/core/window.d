@@ -27,7 +27,7 @@ interface Window {
     @property void width(int newWidth);
     @property int height();
     @property void height(int newHeight);
-    void pollEvent();
+    void pumpEvent();
     void swapBuffers();
     bool shouldClose();
     @property void* delegate(const char* name) loader();
@@ -49,8 +49,8 @@ class GLFWWindow : Window {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 
-        GLFWmonitor* monitor = getMonitorFromIndex(config.monitorIndex);
         if (config.fullscreen) {
+            GLFWmonitor* monitor = getMonitorFromIndex(config.monitorIndex);
             if (config.width == 0 && config.height == 0) {
                 int width, height;
                 glfwGetMonitorWorkarea(monitor, null, null, &width, &height);
@@ -105,7 +105,7 @@ class GLFWWindow : Window {
         glfwSetWindowSize(handle, this.width, newHeight);
     }
 
-    void pollEvent() {
+    void pumpEvent() {
         glfwPollEvents();
         if (callbackThrowing !is null) {
             throw callbackThrowing;

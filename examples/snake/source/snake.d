@@ -349,7 +349,7 @@ final class Snake {
 			batch.drawTexture(gameOverRect, Vec(), Vec(window.width, window.height));
 			Vec gameOverStringSize = courier.stringSize("GAME OVER ! (Press R to retry)");
 			batch.drawString(courier, "GAME OVER ! (Press R to retry)", Color.white,
-					Vec(window.width, window.height) / 2 - gameOverStringSize / 2);
+					Vec(window.width, window.height) / 2, Vec(1), gameOverStringSize / 2, 0);
 		}
 
 		if (pause && !gameOver) {
@@ -362,7 +362,6 @@ final class Snake {
 		Vec scoreStringSize = courier.stringSize(format("Score: %s", score));
 		batch.drawString(courier, format("Score: %s", score),
 				Vec(window.width / 2 - scoreStringSize.x / 2, 10));
-
 		batch.end();
 	}
 }
@@ -406,15 +405,14 @@ class EventManager {
 }
 
 void main() {
-	immutable conf = WindowConfig(0, 0, "Snake", false, true, true, 0);
-	// immutable conf = WindowConfig(screenSize.i, screenSize.j, "Snake", false, true, true, 1);
+	immutable conf = WindowConfig(800, 600, "Snake", false, true, false, 0);
 	auto eventManager = new EventManager();
 	immutable callbacks = WindowEventCallbacks(&eventManager.keyCallback);
 	Window w = new GLFWWindow(conf, callbacks);
 
-	Gl context = loadGlFromLoader(w.loader());
-	writeln(context.glVersion);
-	context.setClearColor(0, 0, 0, 1.0);
+	loadGlFromLoader(w.loader());
+	writeln(glVersion());
+	setClearColor(0, 0, 0, 1.0);
 
 	Snake game = new Snake(w);
 
@@ -423,11 +421,11 @@ void main() {
 	double last = now();
 
 	while (!w.shouldClose()) {
-		w.pollEvent();
+		w.pumpEvent();
 		immutable dt = now() - last;
 		last = now();
 
-		context.clearScreen();
+		clearScreen();
 		game.loop(dt);
 
 		w.swapBuffers();

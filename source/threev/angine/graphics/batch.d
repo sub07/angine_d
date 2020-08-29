@@ -77,11 +77,11 @@ class TextureBatch {
         ibo.bind();
         mesh.submitToGpu();
         if (transparency_enabled) {
-            Gl.context.enableAlphaBlending();
+            enableAlphaBlending();
         } else {
-            Gl.context.disableAlphaBlending();
+            disableAlphaBlending();
         }
-        Gl.context.drawIndexed(DrawPrimitive.Triangles, counter * 6);
+        drawIndexed(DrawPrimitive.Triangles, counter * 6);
         counter = 0;
         mesh.clear();
     }
@@ -172,7 +172,6 @@ class TextureBatch {
             flush();
             mode = BatchMode.Text;
         }
-
         immutable entry = font.stringSizeBottom(str);
         float bottom = entry.bottom;
         immutable size = entry.size; 

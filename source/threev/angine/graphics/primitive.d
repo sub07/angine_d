@@ -1,6 +1,5 @@
 module threev.angine.graphics.primitive;
 
-
 import std.string;
 import glad.gl.loader;
 import glad.gl.funcs;
@@ -15,73 +14,57 @@ enum DrawPrimitive {
     Triangles = GL_TRIANGLES
 }
 
-final class Gl {
-    public static Gl context = null;
-    private bool alpha_blending_enabled = false;
+private bool alpha_blending_enabled = false;
 
-    immutable string glVersion;
-    this(string glVersion) {
-        this.glVersion = glVersion;
-        disableAlphaBlending();
-        context = this;
-    }
+void setViewport(int x, int y, int w, int h) {
+    glViewport(x, y, w, h);
+}
 
-    this(const char* glVersion) {
-        this(fromStringz(glVersion).idup);
-    }
+void setViewport(int w, int h) {
+    setViewport(0, 0, w, h);
+}
 
-    void setViewport(int x, int y, int w, int h) {
-        glViewport(x, y, w, h);
-    }
+void clearScreen() {
+    glClear(GL_COLOR_BUFFER_BIT);
+}
 
-    void setViewport(int w, int h) {
-        setViewport(0, 0, w, h);
-    }
+void setClearColor(float r, float g, float b, float a) {
+    glClearColor(r, g, b, a);
+}
 
-    void clearScreen() {
-        glClear(GL_COLOR_BUFFER_BIT);
-    }
+void draw(DrawPrimitive primitive, int nbVertices) {
+    glDrawArrays(primitive, 0, nbVertices);
+}
 
-    void setClearColor(float r, float g, float b, float a) {
-        glClearColor(r, g, b, a);
-    }
+void drawIndexed(DrawPrimitive primitive, int nbIndices) {
+    glDrawElements(primitive, nbIndices, GL_UNSIGNED_INT, null);
+}
 
-    void draw(DrawPrimitive primitive, int nbVertices) {
-        glDrawArrays(primitive, 0, nbVertices);
-    }
-
-    void drawIndexed(DrawPrimitive primitive, int nbIndices) {
-        glDrawElements(primitive, nbIndices, GL_UNSIGNED_INT, null);
-    }
-
-    void enableAlphaBlending() {
-        if (!alpha_blending_enabled) {
-            alpha_blending_enabled = true;
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        }
-    }
-
-    void disableAlphaBlending() {
-        if (alpha_blending_enabled) {
-            alpha_blending_enabled = false;
-            glDisable(GL_BLEND);
-        }
+void enableAlphaBlending() {
+    if (!alpha_blending_enabled) {
+        alpha_blending_enabled = true;
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 }
 
-Gl loadGl() {
+void disableAlphaBlending() {
+    if (alpha_blending_enabled) {
+        alpha_blending_enabled = false;
+        glDisable(GL_BLEND);
+    }
+}
+
+void loadGl() {
     gladLoadGL();
-    return make();
 }
 
-Gl loadGlFromLoader(void* delegate(const char* name) loader) {
+void loadGlFromLoader(void* delegate(const char* name) loader) {
     gladLoadGL(loader);
-    return make();
 }
 
-private Gl make() {
-    return new Gl(cast(const char*) glGetString(GL_VERSION));
+string glVersion() {
+    return fromStringz(cast(const char*) glGetString(GL_VERSION)).idup;
 }
 
 enum BufferUsage {
