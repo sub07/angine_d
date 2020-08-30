@@ -59,7 +59,7 @@ void loadGl() {
     gladLoadGL();
 }
 
-void loadGlFromLoader(void* delegate(const char* name) loader) {
+void loadGl(void* delegate(const char* name) loader) {
     gladLoadGL(loader);
 }
 

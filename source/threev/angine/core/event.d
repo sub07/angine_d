@@ -3,7 +3,7 @@ module threev.angine.core.event;
 import threev.angine.maths.vec;
 
 enum Key {
-    Unknown,
+    Unknown = 0,
     Escape,
     F1,
     F2,
@@ -105,13 +105,15 @@ enum Key {
     RightControl,
     RightShift,
     Enter,
-    Backspace
+    Backspace,
+    Last
 }
 
 enum MouseButton {
-    LeftButton,
+    LeftButton = 0,
     MiddleButton,
-    RightButton
+    RightButton,
+    Last
 }
 
 enum ActionState {
@@ -120,39 +122,11 @@ enum ActionState {
     Repeated
 }
 
-struct EventState {
-    bool[Key] kPressed;
-    bool[MouseButton] bPressed;
-    Modifiers mods;
-}
-
 struct Modifiers {
-    bool ctrl;
-    bool alt;
-    bool shift;
-    bool windows;
-    bool num_lock;
-    bool caps_lock;
-}
-
-enum EventType {
-    KeyDown,
-    OnKeyDown,
-    OnKeyUp,
-    OnMouseMove,
-    OnMouseDown,
-    OnMouseUp,
-    MouseDown,
-    OnMouseScroll,
-    OnWindowResize
-}
-
-struct Event {
-    EventType type;
-    Modifiers mods;
-    Key key;
-    MouseButton button;
-    Vec mouseScroll;
-    Vec mousePosition;
-    Vec windowSize;
+    bool ctrl = false;
+    bool alt = false;
+    bool shift = false;
+    bool windows = false;
+    bool num_lock = false;
+    bool caps_lock = false;
 }

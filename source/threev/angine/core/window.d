@@ -15,22 +15,28 @@ struct WindowConfig {
 }
 
 alias KeyCallback = void delegate(Key, ActionState, Modifiers);
+alias MouseCallback = void delegate(MouseButton, ActionState, Modifiers);
+alias MouseMoveCallback = void delegate(int, int);
+alias MouseScrollCallback = void delegate(int, int);
 
 struct WindowEventCallbacks {
     KeyCallback keyCallback;
+    MouseCallback mouseCallback;
+    MouseMoveCallback mouseMoveCallback;
+    MouseScrollCallback mouseScrollCallback;
 }
 
 interface Window {
-    @property string title();
-    @property void title(string newTitle);
-    @property int width();
-    @property void width(int newWidth);
-    @property int height();
-    @property void height(int newHeight);
+    string title();
+    void title(string newTitle);
+    int width();
+    void width(int newWidth);
+    int height();
+    void height(int newHeight);
     void pumpEvent();
     void swapBuffers();
     bool shouldClose();
-    @property void* delegate(const char* name) loader();
+    void* delegate(const char* name) loader();
 }
 
 class GLFWWindow : Window {
@@ -69,6 +75,9 @@ class GLFWWindow : Window {
         glfwMakeContextCurrent(handle);
         glfwSetWindowUserPointer(handle, cast(void*) this);
         glfwSetKeyCallback(handle, &keyCallback);
+        glfwSetMouseButtonCallback(handle, &mouseCallback);
+        glfwSetCursorPosCallback(handle, &mouseMoveCallback);
+        glfwSetScrollCallback(handle, &mouseScrollCallback);
     }
 
     ~this() {
@@ -76,32 +85,32 @@ class GLFWWindow : Window {
         unloadGLFW();
     }
 
-    @property string title() {
+    string title() {
         return mTitle;
     }
 
-    @property void title(string newTitle) {
+    void title(string newTitle) {
         mTitle = newTitle;
         glfwSetWindowTitle(handle, toStringz(newTitle));
     }
 
-    @property int width() {
+    int width() {
         int w;
         glfwGetWindowSize(handle, &w, null);
         return w;
     }
 
-    @property void width(int newWidth) {
+    void width(int newWidth) {
         glfwSetWindowSize(handle, newWidth, this.height);
     }
 
-    @property int height() {
+    int height() {
         int h;
         glfwGetWindowSize(handle, null, &h);
         return h;
     }
 
-    @property void height(int newHeight) {
+    void height(int newHeight) {
         glfwSetWindowSize(handle, this.width, newHeight);
     }
 
@@ -120,7 +129,7 @@ class GLFWWindow : Window {
         return glfwWindowShouldClose(handle) == GLFW_TRUE;
     }
 
-    @property void* delegate(const char* name) loader() {
+    void* delegate(const char* name) loader() {
         return x => glfwGetProcAddress(x);
     }
 
@@ -134,6 +143,45 @@ class GLFWWindow : Window {
                     glfwToEngineAction(action), glfwToEngineModifiers(mods));
         } catch (Exception e) {
             callbackThrowing = e;
+        }
+    }
+
+    private static extern (C) void mouseCallback(GLFWwindow* w, int button, int action, int mods) nothrow {
+        GLFWWindow win = cast(GLFWWindow) glfwGetWindowUserPointer(w);
+        try {
+            win.callbacks.mouseCallback(glfwToEngineMouseButton(button),
+                    glfwToEngineAction(action), glfwToEngineModifiers(mods));
+        } catch (Exception e) {
+            callbackThrowing = e;
+        }
+    }
+
+    private static extern (C) void mouseMoveCallback(GLFWwindow* w, double x, double y) nothrow {
+        GLFWWindow win = cast(GLFWWindow) glfwGetWindowUserPointer(w);
+        try {
+            win.callbacks.mouseMoveCallback(cast(int) x, cast(int) y);
+        } catch (Exception e) {
+            callbackThrowing = e;
+        }
+    }
+
+    private static extern (C) void mouseScrollCallback(GLFWwindow* w, double x, double y) nothrow {
+        GLFWWindow win = cast(GLFWWindow) glfwGetWindowUserPointer(w);
+        try {
+            win.callbacks.mouseScrollCallback(cast(int) x, cast(int) y);
+        } catch (Exception e) {
+            callbackThrowing = e;
+        }
+    }
+
+    private static MouseButton glfwToEngineMouseButton(int glfwMouseButton) {
+        final switch (glfwMouseButton) with (MouseButton) {
+        case GLFW_MOUSE_BUTTON_RIGHT:
+            return RightButton;
+        case GLFW_MOUSE_BUTTON_MIDDLE:
+            return MiddleButton;
+        case GLFW_MOUSE_BUTTON_LEFT:
+            return LeftButton;
         }
     }
 

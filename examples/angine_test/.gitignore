@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/angine_test
+angine_test.so
+angine_test.dylib
+angine_test.dll
+angine_test.a
+angine_test.lib
+angine_test-test-*
+*.exe
+*.o
+*.obj
+*.lst

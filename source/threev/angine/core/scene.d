@@ -3,6 +3,7 @@ module threev.angine.core.scene;
 import threev.angine.maths.vec;
 import threev.angine.core.event;
 import std.container;
+import threev.angine.core.angine;
 
 struct FrameInfo {
     float dt = 0;
@@ -12,7 +13,7 @@ struct FrameInfo {
 }
 
 abstract class Scene {
-    protected SceneManager manager;
+    SceneManager manager;
     public bool backgroundActivity = false;
 
     this(SceneManager manager) {
@@ -46,9 +47,6 @@ abstract class Scene {
     public void onMouseUp(MouseButton b, Modifiers m) {
     }
 
-    public void onWindowResize(Vec size) {
-    }
-
     // User capabilities
     protected void exit();
     protected @property float windowHeight();
@@ -57,9 +55,17 @@ abstract class Scene {
     protected @property void windowWidth(float newWidth);
     protected @property Vec windowSize();
     protected @property void windowSize(Vec newSize);
-    protected void pushScene(Scene s);
-    protected void setScene(Scene s);
-    protected void popScene();
+    protected void pushScene(Scene s) {
+        manager.push(s);
+    }
+
+    protected void setScene(Scene s) {
+        manager.set(s);
+    }
+
+    protected void popScene() {
+        manager.pop();
+    }
 }
 
 abstract class DumbScene : Scene {
@@ -90,18 +96,6 @@ abstract class DumbScene : Scene {
     }
 
     override protected @property void windowSize(Vec newSize) {
-    }
-
-    override protected void pushScene(Scene s) {
-        manager.push(s);
-    }
-
-    override protected void setScene(Scene s) {
-        manager.set(s);
-    }
-
-    override protected void popScene() {
-        manager.pop();
     }
 }
 
@@ -153,5 +147,45 @@ class SceneManager {
             scene.draw(f);
             i++;
         }
+    }
+
+    public void dispatchOnKeyDown(Key k, Modifiers mods) {
+        Scene topScene = sceneStack.front();
+        topScene.onKeyDown(k, mods);
+    }
+
+    public void dispatchKeyDown(Key k, Modifiers mods) {
+        Scene topScene = sceneStack.front();
+        topScene.keyDown(k, mods);
+    }
+
+    public void dispatchOnKeyUp(Key k, Modifiers mods) {
+        Scene topScene = sceneStack.front();
+        topScene.onKeyUp(k, mods);
+    }
+
+    public void dispatchOnMouseMove(Vec pos, Modifiers mods) {
+        Scene topScene = sceneStack.front();
+        topScene.onMouseMove(pos, mods);
+    }
+
+    public void dispatchOnMouseScroll(Vec pos, Modifiers mods) {
+        Scene topScene = sceneStack.front();
+        topScene.onMouseScroll(pos, mods);
+    }
+
+    public void dispatchMouseDown(MouseButton b, Modifiers mods) {
+        Scene topScene = sceneStack.front();
+        topScene.mouseDown(b, mods);
+    }
+
+    public void dispatchOnMouseDown(MouseButton b, Modifiers mods) {
+        Scene topScene = sceneStack.front();
+        topScene.onMouseDown(b, mods);
+    }
+
+    public void dispatchOnMouseUp(MouseButton b, Modifiers mods) {
+        Scene topScene = sceneStack.front();
+        topScene.onMouseUp(b, mods);
     }
 }
