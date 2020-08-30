@@ -82,9 +82,7 @@ class Angine {
     }
 
     void launch(S : AngineScene)() {
-        AngineScene initialScene = new S();
-        initialScene.manager = sceneManager;
-        initialScene.engine = this;
+        AngineScene initialScene = new S(sceneManager, this);
         sceneManager.set(initialScene);
         FrameInfo info;
         double last = now();
@@ -113,9 +111,9 @@ class Angine {
 
 abstract class AngineScene : Scene {
     Angine engine = null;
-    this() {
-        super(null);
-        engine = null;
+    this(SceneManager m, Angine a) {
+        super(m);
+        engine = a;
     }
 
     override protected void exit() {

@@ -20,7 +20,7 @@ abstract class Scene {
         this.manager = manager;
     }
 
-    // Behaviour
+    // Behavior
     public void update(FrameInfo info);
     public void draw(FrameInfo info);
     public void keyDown(Key k, Modifiers mods) {
@@ -65,37 +65,6 @@ abstract class Scene {
 
     protected void popScene() {
         manager.pop();
-    }
-}
-
-abstract class DumbScene : Scene {
-
-    this(SceneManager m) {
-        super(m);
-    }
-
-    override protected void exit() {
-    }
-
-    override protected @property float windowHeight() {
-        return 0;
-    }
-
-    override protected @property void windowHeight(float newHeight) {
-    }
-
-    override protected @property float windowWidth() {
-        return 0;
-    }
-
-    override protected @property void windowWidth(float newWidth) {
-    }
-
-    override protected @property Vec windowSize() {
-        return Vec();
-    }
-
-    override protected @property void windowSize(Vec newSize) {
     }
 }
 

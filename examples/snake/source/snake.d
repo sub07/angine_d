@@ -1,15 +1,7 @@
 module snake;
 
-import std.stdio;
-import std.string;
 import threev.angine;
-import std.math;
-import std.random;
-import std.container;
-import std.exception;
-import std.conv;
-import std.format;
-import std.functional;
+import std;
 
 immutable vTex = `
 #version 460
@@ -58,377 +50,343 @@ void main() {
 }
 `;
 
-enum {
-	cellSize = Vec(32, 32),
-	gridSize = Vec(10, 10),
-	screenSize = Vec(800, 600)
-}
+final class Snake : AngineScene {
+    Vec cellSize = Vec(32, 32);
+    Vec gridSize = Vec(10, 10);
 
-Vec randomPos() {
-	return Vec(uniform(2, cast(int) gridSize.w - 2), uniform(2, cast(int) gridSize.h - 2));
-}
+    Shader textureShader;
+    Shader textShader;
 
-Vec randomApplePos() {
-	return Vec(uniform(0, cast(int) gridSize.w), uniform(0, cast(int) gridSize.h));
-}
+    TextureBatch batch;
 
-float rotateFromOrientation(Orientation o) {
-	final switch (o) {
-	case Orientation.North:
-		return PI_2;
-	case Orientation.South:
-		return -PI_2;
-	case Orientation.West:
-		return 0;
-	case Orientation.East:
-		return PI;
-	}
-}
+    Texture snakeTex;
 
-enum Orientation {
-	North,
-	South,
-	West,
-	East
-}
+    SubTexture snakeHead;
+    SubTexture snakeBody;
+    SubTexture snakeTail;
+    SubTexture appleTex;
+    SubTexture cellTex;
+    SubTexture gameOverRect;
 
-Orientation randomOrientation() {
-	immutable r = uniform(0, 4);
-	final switch (r) {
-	case 0:
-		return Orientation.North;
-	case 1:
-		return Orientation.South;
-	case 2:
-		return Orientation.West;
-	case 3:
-		return Orientation.East;
-	}
-}
+    Font courier;
 
-Vec vecFromOrientation(Orientation o) {
-	final switch (o) {
-	case Orientation.North:
-		return Vec(0, -1);
-	case Orientation.South:
-		return Vec(0, 1);
-	case Orientation.West:
-		return Vec(-1, 0);
-	case Orientation.East:
-		return Vec(1, 0);
-	}
-}
+    auto snake = Array!SnakePart();
 
-Orientation oppositeOrientation(Orientation o) {
-	final switch (o) {
-	case Orientation.North:
-		return Orientation.South;
-	case Orientation.South:
-		return Orientation.North;
-	case Orientation.East:
-		return Orientation.West;
-	case Orientation.West:
-		return Orientation.East;
-	}
-}
+    SnakePart head;
+    SnakePart tail;
 
-struct SnakePart {
-	bool tail;
-	Vec pos;
-	Orientation o;
+    Vec apple;
 
-	string toString() const {
-		return pos.toString() ~ ", " ~ to!string(o);
-	}
-}
+    int score = 0;
 
-final class Snake {
-	Image snakeImg;
+    bool gameOver = false;
+    bool pause = false;
 
-	Shader textureShader;
-	Shader textShader;
+    float timeAcc = 0;
+    float tickInterval = 0.4;
 
-	TextureBatch batch;
+    this(SceneManager m, Angine a) {
+        super(m, a);
+        apple = randomApplePos();
+        Image snakeImg = new Image("assets/snake.png");
+        textureShader = new Shader(vTex, fTex);
+        textShader = new Shader(vTex, fText);
+        courier = new Font("assets/courier.ttf", 40);
+        textureShader.sendVec2("viewportSize", windowWidth, windowHeight);
+        textShader.sendVec2("viewportSize", windowWidth, windowHeight);
+        batch = new TextureBatch(1000, textureShader, textShader);
+        batch.transparency = true;
+        snakeTex = new Texture(TextureFilter.Nearest, snakeImg.width,
+                snakeImg.height, snakeImg.format, snakeImg.data.ptr);
 
-	Texture snakeTex;
+        snakeHead = snakeTex.subTextureOf(Rect(0, 0, 32, 32));
+        snakeBody = snakeTex.subTextureOf(Rect(32, 0, 32, 32));
+        snakeTail = snakeTex.subTextureOf(Rect(64, 0, 32, 32));
+        appleTex = snakeTex.subTextureOf(Rect(96, 0, 32, 32));
+        cellTex = snakeTex.subTextureOf(Rect(128, 0, 32, 32));
+        gameOverRect = snakeTex.subTextureOf(Rect(160, 0, 1, 1));
+        snake.reserve(cast(int)(gridSize.w * gridSize.h) / 3);
 
-	SubTexture snakeHead;
-	SubTexture snakeBody;
-	SubTexture snakeTail;
-	SubTexture appleTex;
-	SubTexture cellTex;
-	SubTexture gameOverRect;
+        head = SnakePart(true, randomPos(), randomOrientation());
+        tail = SnakePart(true, head.pos - vecFromOrientation(head.o), head.o);
 
-	Font courier;
+        growSnake();
+    }
 
-	Vec centeringOffset;
-	auto snake = Array!SnakePart();
+    override void update(FrameInfo i) {
+        if (!pause)
+            timeAcc += i.dt;
+        if (timeAcc > tickInterval) {
+            timeAcc = 0.0;
+            if (!gameOver) {
+                tick();
+            }
+        }
+    }
 
-	SnakePart head;
-	SnakePart tail;
+    override void draw(FrameInfo i) {
 
-	Vec apple;
+        batch.begin();
+        for (float x = 0; x < gridSize.w; x++) {
+            for (float y = 0; y < gridSize.h; y++) {
+                batch.drawTexture(cellTex, Vec(x, y) * cellSize + centeringOffset);
+            }
+        }
 
-	int score = 0;
+        batch.drawTexture(snakeHead, head.pos * cellSize + Vec(16,
+                16) + centeringOffset, Vec(1), Vec(16, 16), rotateFromOrientation(head.o));
+        batch.drawTexture(snakeTail, tail.pos * cellSize + Vec(16,
+                16) + centeringOffset, Vec(1), Vec(16, 16), rotateFromOrientation(tail.o));
 
-	bool gameOver = false;
-	bool pause = false;
+        foreach (part; snake) {
+            batch.drawTexture(part.tail ? snakeTail : snakeBody,
+                    part.pos * cellSize + Vec(16, 16) + centeringOffset, Vec(1),
+                    Vec(16, 16), rotateFromOrientation(part.o));
+        }
 
-	Window window;
+        batch.drawTexture(appleTex, apple * cellSize + centeringOffset);
 
-	this(Window w) {
-		window = w;
-		centeringOffset = Vec(w.width, w.height) / 2 - (cellSize * gridSize) / 2;
-		apple = randomApplePos();
-		snakeImg = new Image("assets/snake.png");
-		textureShader = new Shader(vTex, fTex);
-		textShader = new Shader(vTex, fText);
-		courier = new Font("assets/courier.ttf", 40);
-		textureShader.sendVec2("viewportSize", w.width, w.height);
-		textShader.sendVec2("viewportSize", w.width, w.height);
-		batch = new TextureBatch(1000, textureShader, textShader);
-		batch.transparency = true;
-		snakeTex = new Texture(TextureFilter.Nearest, snakeImg.width,
-				snakeImg.height, snakeImg.format, snakeImg.data.ptr);
+        if (gameOver) {
+            batch.drawTexture(gameOverRect, Vec(), Vec(windowWidth, windowHeight));
+            Vec gameOverStringSize = courier.stringSize("GAME OVER ! (Press R to retry)");
+            batch.drawString(courier, "GAME OVER ! (Press R to retry)", Color.white,
+                    Vec(windowWidth, windowHeight) / 2, Vec(1), gameOverStringSize / 2, 0);
+        }
 
-		snakeHead = snakeTex.subTextureOf(Rect(0, 0, 32, 32));
-		snakeBody = snakeTex.subTextureOf(Rect(32, 0, 32, 32));
-		snakeTail = snakeTex.subTextureOf(Rect(64, 0, 32, 32));
-		appleTex = snakeTex.subTextureOf(Rect(96, 0, 32, 32));
-		cellTex = snakeTex.subTextureOf(Rect(128, 0, 32, 32));
-		gameOverRect = snakeTex.subTextureOf(Rect(160, 0, 1, 1));
-		snake.reserve(cast(int)(gridSize.w * gridSize.h) / 3);
+        if (pause && !gameOver) {
+            batch.drawTexture(gameOverRect, Vec(), Vec(windowWidth, windowHeight));
+            Vec pauseStringSize = courier.stringSize("PAUSE");
+            batch.drawString(courier, "PAUSE", Color.white, Vec(windowWidth,
+                    windowHeight) / 2 - pauseStringSize / 2);
+        }
 
-		head = SnakePart(true, randomPos(), randomOrientation());
-		tail = SnakePart(true, head.pos - vecFromOrientation(head.o), head.o);
+        Vec scoreStringSize = courier.stringSize(format("Score: %s", score));
+        batch.drawString(courier, format("Score: %s", score),
+                Vec(windowWidth / 2 - scoreStringSize.x / 2, 10));
+        batch.end();
+    }
 
-		growSnake();
-	}
+    override void onKeyDown(Key key, Modifiers mods) {
+        if (key == Key.Space) {
+            pause = !pause;
+        }
+        if (key == Key.Up) {
+            immutable second = snakeSecond();
+            if (second.o != Orientation.South) {
+                head.o = Orientation.North;
+            }
+        }
+        if (key == Key.Down) {
+            immutable second = snakeSecond();
+            if (second.o != Orientation.North) {
+                head.o = Orientation.South;
+            }
+        }
+        if (key == Key.Left) {
+            immutable second = snakeSecond();
+            if (second.o != Orientation.East) {
+                head.o = Orientation.West;
+            }
+        }
+        if (key == Key.Right) {
+            immutable second = snakeSecond();
+            if (second.o != Orientation.West) {
+                head.o = Orientation.East;
+            }
+        }
+        if (key == Key.R && gameOver) {
+            retry();
+        }
+    }
 
-	void growSnake() {
-		snake ~= SnakePart(false, tail.pos, tail.o);
-		tail.pos -= vecFromOrientation(tail.o);
-	}
+    private void adjustOrientation() {
+        immutable beforeLast = snakeBeforeLast();
+        tail.o = beforeLast.o;
 
-	private void adjustOrientation() {
-		immutable beforeLast = snakeBeforeLast();
-		tail.o = beforeLast.o;
+        for (int i = 0; i < snake.length() - 1; i++) {
+            snake[$ - 1 - i].o = snake[$ - 2 - i].o;
+        }
 
-		for (int i = 0; i < snake.length() - 1; i++) {
-			snake[$ - 1 - i].o = snake[$ - 2 - i].o;
-		}
+        auto secondBody = snakeSecond();
+        secondBody.o = head.o;
 
-		auto secondBody = snakeSecond();
-		secondBody.o = head.o;
+        snakeSecond() = secondBody;
+    }
 
-		snakeSecond() = secondBody;
-	}
+    private void step() {
+        head.pos += vecFromOrientation(head.o);
+        tail.pos += vecFromOrientation(tail.o);
+        foreach (ref part; snake) {
+            part.pos += vecFromOrientation(part.o);
+        }
+    }
 
-	private void step() {
-		head.pos += vecFromOrientation(head.o);
-		tail.pos += vecFromOrientation(tail.o);
-		foreach (ref part; snake) {
-			part.pos += vecFromOrientation(part.o);
-		}
-	}
+    private void checkOutOfGrid() {
+        if (head.pos.x < 0)
+            head.pos.x = gridSize.w - 1;
+        if (head.pos.x >= gridSize.w)
+            head.pos.x = 0;
+        if (head.pos.y < 0)
+            head.pos.y = gridSize.h - 1;
+        if (head.pos.y >= gridSize.h)
+            head.pos.y = 0;
 
-	private void checkOutOfGrid() {
-		if (head.pos.x < 0)
-			head.pos.x = gridSize.w - 1;
-		if (head.pos.x >= gridSize.w)
-			head.pos.x = 0;
-		if (head.pos.y < 0)
-			head.pos.y = gridSize.h - 1;
-		if (head.pos.y >= gridSize.h)
-			head.pos.y = 0;
+        if (tail.pos.x < 0)
+            tail.pos.x = gridSize.w - 1;
+        if (tail.pos.x >= gridSize.w)
+            tail.pos.x = 0;
+        if (tail.pos.h < 0)
+            tail.pos.h = gridSize.h - 1;
+        if (tail.pos.h >= gridSize.h)
+            tail.pos.h = 0;
 
-		if (tail.pos.x < 0)
-			tail.pos.x = gridSize.w - 1;
-		if (tail.pos.x >= gridSize.w)
-			tail.pos.x = 0;
-		if (tail.pos.h < 0)
-			tail.pos.h = gridSize.h - 1;
-		if (tail.pos.h >= gridSize.h)
-			tail.pos.h = 0;
+        foreach (ref part; snake) {
+            if (part.pos.x < 0)
+                part.pos.x = gridSize.w - 1;
+            if (part.pos.x >= gridSize.w)
+                part.pos.x = 0;
+            if (part.pos.y < 0)
+                part.pos.y = gridSize.h - 1;
+            if (part.pos.y >= gridSize.h)
+                part.pos.y = 0;
+        }
+    }
 
-		foreach (ref part; snake) {
-			if (part.pos.x < 0)
-				part.pos.x = gridSize.w - 1;
-			if (part.pos.x >= gridSize.w)
-				part.pos.x = 0;
-			if (part.pos.y < 0)
-				part.pos.y = gridSize.h - 1;
-			if (part.pos.y >= gridSize.h)
-				part.pos.y = 0;
-		}
-	}
+    @property Vec centeringOffset() {
+        return windowSize / 2 - (cellSize * gridSize) / 2;
+    }
 
-	private bool onSnakeBody(Vec v) {
-		foreach (part; snake ~ tail) {
-			if (part.pos == v)
-				return true;
-		}
-		return false;
-	}
+    private bool onSnakeBody(Vec v) {
+        foreach (part; snake ~ tail) {
+            if (part.pos == v)
+                return true;
+        }
+        return false;
+    }
 
-	private void checkOnApple() {
-		if (head.pos == apple) {
-			growSnake();
-			score++;
-			do {
-				apple = randomApplePos();
-			}
-			while (onSnakeBody(apple) || apple == head.pos);
-		}
-	}
+    private void checkOnApple() {
+        if (head.pos == apple) {
+            growSnake();
+            score++;
+            do {
+                apple = randomApplePos();
+            }
+            while (onSnakeBody(apple) || apple == head.pos);
+        }
+    }
 
-	private void checkCollision() {
-		if (onSnakeBody(head.pos))
-			gameOver = true;
-	}
+    private void checkCollision() {
+        if (onSnakeBody(head.pos))
+            gameOver = true;
+    }
 
-	void tick() {
-		step();
-		adjustOrientation();
-		checkOutOfGrid();
-		checkCollision();
-		checkOnApple();
-		checkOutOfGrid();
-	}
+    void tick() {
+        step();
+        adjustOrientation();
+        checkOutOfGrid();
+        checkCollision();
+        checkOnApple();
+        checkOutOfGrid();
+    }
 
-	double timeAcc = 0;
-	double tickInterval = 0.4;
+    ref SnakePart snakeSecond() {
+        return snake.empty ? tail : snake.front();
+    }
 
-	ref SnakePart snakeSecond() {
-		return snake.empty ? tail : snake.front();
-	}
+    SnakePart snakeBeforeLast() {
+        return snake.empty ? head : snake.back();
+    }
 
-	SnakePart snakeBeforeLast() {
-		return snake.empty ? head : snake.back();
-	}
+    void retry() {
+        gameOver = false;
+        score = 0;
+        snake.clear();
+        tail = SnakePart(true, head.pos - vecFromOrientation(head.o), head.o);
+        growSnake();
+    }
 
-	void retry() {
-		gameOver = false;
-		score = 0;
-		snake.clear();
-		tail = SnakePart(true, head.pos - vecFromOrientation(head.o), head.o);
-		growSnake();
-	}
+    void growSnake() {
+        snake ~= SnakePart(false, tail.pos, tail.o);
+        tail.pos -= vecFromOrientation(tail.o);
+    }
 
-	void loop(double dt) {
-		if (!pause)
-			timeAcc += dt;
-		if (timeAcc > tickInterval) {
-			timeAcc = 0.0;
-			if (!gameOver) {
-				tick();
-			}
-		}
+    Vec randomPos() {
+        return Vec(uniform(2, cast(int) gridSize.w - 2), uniform(2, cast(int) gridSize.h - 2));
+    }
 
-		batch.begin();
-		for (float x = 0; x < gridSize.w; x++) {
-			for (float y = 0; y < gridSize.h; y++) {
-				batch.drawTexture(cellTex, Vec(x, y) * cellSize + centeringOffset);
-			}
-		}
+    Vec randomApplePos() {
+        return Vec(uniform(0, cast(int) gridSize.w), uniform(0, cast(int) gridSize.h));
+    }
 
-		batch.drawTexture(snakeHead, head.pos * cellSize + Vec(16,
-				16) + centeringOffset, Vec(1), Vec(16, 16), rotateFromOrientation(head.o));
-		batch.drawTexture(snakeTail, tail.pos * cellSize + Vec(16,
-				16) + centeringOffset, Vec(1), Vec(16, 16), rotateFromOrientation(tail.o));
+    float rotateFromOrientation(Orientation o) {
+        final switch (o) {
+        case Orientation.North:
+            return PI_2;
+        case Orientation.South:
+            return -PI_2;
+        case Orientation.West:
+            return 0;
+        case Orientation.East:
+            return PI;
+        }
+    }
 
-		foreach (part; snake) {
-			batch.drawTexture(part.tail ? snakeTail : snakeBody,
-					part.pos * cellSize + Vec(16, 16) + centeringOffset, Vec(1),
-					Vec(16, 16), rotateFromOrientation(part.o));
-		}
+    enum Orientation {
+        North,
+        South,
+        West,
+        East
+    }
 
-		batch.drawTexture(appleTex, apple * cellSize + centeringOffset);
+    Orientation randomOrientation() {
+        immutable r = uniform(0, 4);
+        final switch (r) {
+        case 0:
+            return Orientation.North;
+        case 1:
+            return Orientation.South;
+        case 2:
+            return Orientation.West;
+        case 3:
+            return Orientation.East;
+        }
+    }
 
-		if (gameOver) {
-			batch.drawTexture(gameOverRect, Vec(), Vec(window.width, window.height));
-			Vec gameOverStringSize = courier.stringSize("GAME OVER ! (Press R to retry)");
-			batch.drawString(courier, "GAME OVER ! (Press R to retry)", Color.white,
-					Vec(window.width, window.height) / 2, Vec(1), gameOverStringSize / 2, 0);
-		}
+    Vec vecFromOrientation(Orientation o) {
+        final switch (o) {
+        case Orientation.North:
+            return Vec(0, -1);
+        case Orientation.South:
+            return Vec(0, 1);
+        case Orientation.West:
+            return Vec(-1, 0);
+        case Orientation.East:
+            return Vec(1, 0);
+        }
+    }
 
-		if (pause && !gameOver) {
-			batch.drawTexture(gameOverRect, Vec(), Vec(window.width, window.height));
-			Vec pauseStringSize = courier.stringSize("PAUSE");
-			batch.drawString(courier, "PAUSE", Color.white, Vec(window.width,
-					window.height) / 2 - pauseStringSize / 2);
-		}
+    Orientation oppositeOrientation(Orientation o) {
+        final switch (o) {
+        case Orientation.North:
+            return Orientation.South;
+        case Orientation.South:
+            return Orientation.North;
+        case Orientation.East:
+            return Orientation.West;
+        case Orientation.West:
+            return Orientation.East;
+        }
+    }
 
-		Vec scoreStringSize = courier.stringSize(format("Score: %s", score));
-		batch.drawString(courier, format("Score: %s", score),
-				Vec(window.width / 2 - scoreStringSize.x / 2, 10));
-		batch.end();
-	}
-}
+    struct SnakePart {
+        bool tail;
+        Vec pos;
+        Orientation o;
+    }
 
-class EventManager {
-	Snake s;
-	void keyCallback(Key key, ActionState action, Modifiers m) {
-		if (action == ActionState.Pressed) {
-			if (key == Key.Space) {
-				s.pause = !s.pause;
-			}
-			if (key == Key.Up) {
-				immutable second = s.snakeSecond();
-				if (second.o != Orientation.South) {
-					s.head.o = Orientation.North;
-				}
-			}
-			if (key == Key.Down) {
-				immutable second = s.snakeSecond();
-				if (second.o != Orientation.North) {
-					s.head.o = Orientation.South;
-				}
-			}
-			if (key == Key.Left) {
-				immutable second = s.snakeSecond();
-				if (second.o != Orientation.East) {
-					s.head.o = Orientation.West;
-				}
-			}
-			if (key == Key.Right) {
-				immutable second = s.snakeSecond();
-				if (second.o != Orientation.West) {
-					s.head.o = Orientation.East;
-				}
-			}
-			if (key == Key.R && s.gameOver) {
-				s.retry();
-			}
-		}
-	}
 }
 
 void main() {
-	immutable conf = WindowConfig(800, 600, "Snake", false, true, false, 0);
-	auto eventManager = new EventManager();
-	immutable callbacks = WindowEventCallbacks(&eventManager.keyCallback);
-	Window w = new GLFWWindow(conf, callbacks);
-
-	loadGlFromLoader(w.loader());
-	writeln(glVersion());
-	setClearColor(0, 0, 0, 1.0);
-
-	Snake game = new Snake(w);
-
-	eventManager.s = game;
-
-	double last = now();
-
-	while (!w.shouldClose()) {
-		w.pumpEvent();
-		immutable dt = now() - last;
-		last = now();
-
-		clearScreen();
-		game.loop(dt);
-
-		w.swapBuffers();
-	}
-	destroy(w);
+    Angine a = new Angine(AngineConfig());
+    a.launch!Snake;
 }
