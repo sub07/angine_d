@@ -3,61 +3,9 @@ module snake;
 import threev.angine;
 import std;
 
-immutable vTex = `
-#version 460
-
-layout(location = 0) in vec2 vertexPosition;
-layout(location = 1) in vec2 texturePosition;
-layout(location = 2) in vec4 color;
-
-out vec2 texPos;
-out vec4 tint;
-uniform vec2 viewportSize;
-
-void main() {
-	vec2 workingVec = vertexPosition;
-	workingVec.x = workingVec.x * (2 / viewportSize.x) - 1;
-	workingVec.y = workingVec.y * -(2 / viewportSize.y) + 1;
-	gl_Position = vec4(workingVec, 0.0, 1.0);
-	texPos = texturePosition;
-	tint = color;
-}
-`;
-
-immutable fTex = `
-#version 460
-
-in vec2 texPos;
-in vec4 tint;
-uniform sampler2D textureUnit;
-out vec4 finalPixelColor;
-
-void main() {
-    finalPixelColor = texture(textureUnit, texPos) * tint;
-}
-`;
-
-immutable fText = `
-#version 460
-
-in vec2 texPos;
-in vec4 tint;
-uniform sampler2D textureUnit;
-out vec4 finalPixelColor;
-
-void main() {
-    finalPixelColor = vec4(1, 1, 1, texture(textureUnit, texPos).r) * tint;
-}
-`;
-
 final class Snake : AngineScene {
     Vec cellSize = Vec(32, 32);
     Vec gridSize = Vec(10, 10);
-
-    Shader textureShader;
-    Shader textShader;
-
-    TextureBatch batch;
 
     Texture snakeTex;
 
@@ -85,20 +33,13 @@ final class Snake : AngineScene {
     float timeAcc = 0;
     float tickInterval = 0.4;
 
-    this(SceneManager m, Angine a) {
-        super(m, a);
+    this(Angine a) {
+        super(a);
         apple = randomApplePos();
         Image snakeImg = new Image("assets/snake.png");
-        textureShader = new Shader(vTex, fTex);
-        textShader = new Shader(vTex, fText);
         courier = new Font("assets/courier.ttf", 40);
-        textureShader.sendVec2("viewportSize", windowWidth, windowHeight);
-        textShader.sendVec2("viewportSize", windowWidth, windowHeight);
-        batch = new TextureBatch(1000, textureShader, textShader);
-        batch.transparency = true;
         snakeTex = new Texture(TextureFilter.Nearest, snakeImg.width,
                 snakeImg.height, snakeImg.format, snakeImg.data.ptr);
-
         snakeHead = snakeTex.subTextureOf(Rect(0, 0, 32, 32));
         snakeBody = snakeTex.subTextureOf(Rect(32, 0, 32, 32));
         snakeTail = snakeTex.subTextureOf(Rect(64, 0, 32, 32));
@@ -125,45 +66,42 @@ final class Snake : AngineScene {
     }
 
     override void draw(FrameInfo i) {
-
-        batch.begin();
         for (float x = 0; x < gridSize.w; x++) {
             for (float y = 0; y < gridSize.h; y++) {
-                batch.drawTexture(cellTex, Vec(x, y) * cellSize + centeringOffset);
+                drawTexture(cellTex, Vec(x, y) * cellSize + centeringOffset);
             }
         }
 
-        batch.drawTexture(snakeHead, head.pos * cellSize + Vec(16,
+        drawTexture(snakeHead, head.pos * cellSize + Vec(16,
                 16) + centeringOffset, Vec(1), Vec(16, 16), rotateFromOrientation(head.o));
-        batch.drawTexture(snakeTail, tail.pos * cellSize + Vec(16,
+        drawTexture(snakeTail, tail.pos * cellSize + Vec(16,
                 16) + centeringOffset, Vec(1), Vec(16, 16), rotateFromOrientation(tail.o));
 
         foreach (part; snake) {
-            batch.drawTexture(part.tail ? snakeTail : snakeBody,
+            drawTexture(part.tail ? snakeTail : snakeBody,
                     part.pos * cellSize + Vec(16, 16) + centeringOffset, Vec(1),
                     Vec(16, 16), rotateFromOrientation(part.o));
         }
 
-        batch.drawTexture(appleTex, apple * cellSize + centeringOffset);
+        drawTexture(appleTex, apple * cellSize + centeringOffset);
 
         if (gameOver) {
-            batch.drawTexture(gameOverRect, Vec(), Vec(windowWidth, windowHeight));
+            drawTexture(gameOverRect, Vec(), Vec(windowSize.w, windowSize.h));
             Vec gameOverStringSize = courier.stringSize("GAME OVER ! (Press R to retry)");
-            batch.drawString(courier, "GAME OVER ! (Press R to retry)", Color.white,
-                    Vec(windowWidth, windowHeight) / 2, Vec(1), gameOverStringSize / 2, 0);
+            drawString(courier, "GAME OVER ! (Press R to retry)", Color.white,
+                    Vec(windowSize.w, windowSize.h) / 2, Vec(1), gameOverStringSize / 2, 0);
         }
 
         if (pause && !gameOver) {
-            batch.drawTexture(gameOverRect, Vec(), Vec(windowWidth, windowHeight));
+            drawTexture(gameOverRect, Vec(), Vec(windowSize.w, windowSize.h));
             Vec pauseStringSize = courier.stringSize("PAUSE");
-            batch.drawString(courier, "PAUSE", Color.white, Vec(windowWidth,
-                    windowHeight) / 2 - pauseStringSize / 2);
+            drawString(courier, "PAUSE", Color.white, Vec(windowSize.w,
+                    windowSize.h) / 2 - pauseStringSize / 2);
         }
 
         Vec scoreStringSize = courier.stringSize(format("Score: %s", score));
-        batch.drawString(courier, format("Score: %s", score),
-                Vec(windowWidth / 2 - scoreStringSize.x / 2, 10));
-        batch.end();
+        drawString(courier, format("Score: %s", score), Color.white,
+                Vec(windowSize.w / 2 - scoreStringSize.x / 2, 10));
     }
 
     override void onKeyDown(Key key, Modifiers mods) {

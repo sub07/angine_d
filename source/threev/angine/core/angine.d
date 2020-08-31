@@ -14,17 +14,34 @@ private struct EventState {
     Modifiers mods;
 }
 
+private struct ShaderCollection {
+    Shader textureBatch;
+    Shader textBatch;
+}
+
 class Angine {
     SceneManager sceneManager;
     Window window;
+    ShaderCollection shaders;
     bool shouldClose = false;
     EventState eventState;
     EventState previousState;
+    TextureBatch batch;
+
     this(AngineConfig config) {
         window = new GLFWWindow(config.windowConfig, WindowEventCallbacks(&keyCallback,
                 &mouseCallback, &mouseMoveCallback, &mouseScrollCallback));
         sceneManager = new SceneManager();
         loadGl(window.loader);
+
+        shaders.textureBatch = new Shader(vTex, fTex);
+        shaders.textBatch = new Shader(vTex, fText);
+
+        shaders.textureBatch.sendVec2("viewportSize", window.width, window.height);
+        shaders.textBatch.sendVec2("viewportSize", window.width, window.height);
+
+        batch = new TextureBatch(5000, shaders.textureBatch, shaders.textBatch);
+        batch.transparency = true;
         setClearColor(0, 0, 0, 1);
     }
 
@@ -82,7 +99,7 @@ class Angine {
     }
 
     void launch(S : AngineScene)() {
-        AngineScene initialScene = new S(sceneManager, this);
+        AngineScene initialScene = new S(this);
         sceneManager.set(initialScene);
         FrameInfo info;
         double last = now();
@@ -102,7 +119,9 @@ class Angine {
             handleEvents();
             sceneManager.update(info);
             clearScreen();
+            batch.begin();
             sceneManager.draw(info);
+            batch.end();
             window.swapBuffers();
             info.frameIndex++;
         }
@@ -111,8 +130,8 @@ class Angine {
 
 abstract class AngineScene : Scene {
     Angine engine = null;
-    this(SceneManager m, Angine a) {
-        super(m);
+    this(Angine a) {
+        super(a.sceneManager);
         engine = a;
     }
 
@@ -120,28 +139,32 @@ abstract class AngineScene : Scene {
         engine.shouldClose = true;
     }
 
-    override protected @property float windowHeight() {
-        return cast(float) engine.window.height;
-    }
-
-    override protected @property void windowHeight(float newHeight) {
-        engine.window.height = cast(int) newHeight;
-    }
-
-    override protected @property float windowWidth() {
-        return cast(float) engine.window.width;
-    }
-
-    override protected @property void windowWidth(float newWidth) {
-        engine.window.width = cast(int) newWidth;
-    }
-
     override protected @property Vec windowSize() {
-        return Vec(windowWidth, windowHeight);
+        return Vec(engine.window.width, engine.window.height);
     }
 
     override protected @property void windowSize(Vec newSize) {
-        windowWidth = newSize.w;
-        windowHeight = newSize.h;
+        engine.window.width = cast(int) newSize.w;
+        engine.window.height = cast(int) newSize.h;
+    }
+
+    void drawTexture(SubTexture t, Vec translate = Vec(), Vec scale = Vec(1),
+            Vec origin = Vec(), float rotate = 0) {
+        engine.batch.drawTexture(t, translate, scale, origin, rotate);
+    }
+
+    void drawTexture(Texture t, Vec translate = Vec(), Vec scale = Vec(1),
+            Vec origin = Vec(), float rotate = 0) {
+        engine.batch.drawTexture(t, translate, scale, origin, rotate);
+    }
+
+    void drawString(Font font, string str, Color c, Vec translate = Vec(),
+            Vec scale = Vec(1), Vec origin = Vec(), float rotate = 0) {
+        engine.batch.drawString(font, str, c, translate, scale, origin, rotate);
+    }
+
+    void drawString(Font font, Object obj, Color c, Vec translate = Vec(),
+            Vec scale = Vec(1), Vec origin = Vec(), float rotate = 0) {
+        engine.batch.drawString(font, obj, c, translate, scale, origin, rotate);
     }
 }

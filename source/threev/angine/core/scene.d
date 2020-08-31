@@ -49,10 +49,6 @@ abstract class Scene {
 
     // User capabilities
     protected void exit();
-    protected @property float windowHeight();
-    protected @property void windowHeight(float newHeight);
-    protected @property float windowWidth();
-    protected @property void windowWidth(float newWidth);
     protected @property Vec windowSize();
     protected @property void windowSize(Vec newSize);
     protected void pushScene(Scene s) {

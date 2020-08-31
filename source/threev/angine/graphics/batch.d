@@ -9,6 +9,53 @@ import std.stdio;
 import threev.angine.graphics.subtexture;
 import threev.angine.graphics.font;
 
+immutable vTex = `
+#version 460
+
+layout(location = 0) in vec2 vertexPosition;
+layout(location = 1) in vec2 texturePosition;
+layout(location = 2) in vec4 color;
+
+out vec2 texPos;
+out vec4 tint;
+uniform vec2 viewportSize;
+
+void main() {
+	vec2 workingVec = vertexPosition;
+	workingVec.x = workingVec.x * (2 / viewportSize.x) - 1;
+	workingVec.y = workingVec.y * -(2 / viewportSize.y) + 1;
+	gl_Position = vec4(workingVec, 0.0, 1.0);
+	texPos = texturePosition;
+	tint = color;
+}
+`;
+
+immutable fTex = `
+#version 460
+
+in vec2 texPos;
+in vec4 tint;
+uniform sampler2D textureUnit;
+out vec4 finalPixelColor;
+
+void main() {
+    finalPixelColor = texture(textureUnit, texPos) * tint;
+}
+`;
+
+immutable fText = `
+#version 460
+
+in vec2 texPos;
+in vec4 tint;
+uniform sampler2D textureUnit;
+out vec4 finalPixelColor;
+
+void main() {
+    finalPixelColor = vec4(1, 1, 1, texture(textureUnit, texPos).r) * tint;
+}
+`;
+
 class TextureBatch {
     private bool transparency_enabled = false;
     private Mesh mesh;
@@ -174,7 +221,7 @@ class TextureBatch {
         }
         immutable entry = font.stringSizeBottom(str);
         float bottom = entry.bottom;
-        immutable size = entry.size; 
+        immutable size = entry.size;
         for (int i = 0; i < str.length; i++) {
             Glyph g = font.glyphs[str[i]];
             immutable o = origin - Vec(g.offset.x, size.h - g.offset.y + bottom);
