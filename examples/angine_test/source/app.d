@@ -3,16 +3,19 @@ import std.stdio;
 import threev.angine;
 
 class MyScene : AngineScene {
+	Font courier;
 
-	this() {
-
+	this(Angine a) {
+		super(a);
+		courier = new Font("assets/courier.ttf", 40);
 	}
 
 	override public void update(FrameInfo info) {
-		writeln(info);
+		// writeln(info);
 	}
 
 	override public void draw(FrameInfo info) {
+		drawString(courier, "Score", Color.white, windowSize / 2);
 	}
 
 	override public void onKeyDown(Key k, Modifiers mods) {
@@ -50,6 +53,7 @@ class MyScene : AngineScene {
 
 void main() {
 	auto config = AngineConfig();
+	config.windowConfig.width = 799;
 	config.windowConfig.vsync = false;
 	Angine a = new Angine(config);
 	a.launch!MyScene;

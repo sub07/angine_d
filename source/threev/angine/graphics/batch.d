@@ -21,9 +21,9 @@ out vec4 tint;
 uniform vec2 viewportSize;
 
 void main() {
-	vec2 workingVec = vertexPosition;
-	workingVec.x = workingVec.x * (2 / viewportSize.x) - 1;
-	workingVec.y = workingVec.y * -(2 / viewportSize.y) + 1;
+	vec2 workingVec = vec2(int(vertexPosition.x), int(vertexPosition.y));
+	workingVec.x = workingVec.x * (2.0 / viewportSize.x) - 1.0;
+	workingVec.y = workingVec.y * -(2.0 / viewportSize.y) + 1.0;
 	gl_Position = vec4(workingVec, 0.0, 1.0);
 	texPos = texturePosition;
 	tint = color;

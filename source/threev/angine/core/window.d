@@ -18,12 +18,16 @@ alias KeyCallback = void delegate(Key, ActionState, Modifiers);
 alias MouseCallback = void delegate(MouseButton, ActionState, Modifiers);
 alias MouseMoveCallback = void delegate(int, int);
 alias MouseScrollCallback = void delegate(int, int);
+alias WindowResizeCallback = void delegate(int, int);
+alias FramebufferResizeCallback = void delegate(int, int);
 
 struct WindowEventCallbacks {
     KeyCallback keyCallback;
     MouseCallback mouseCallback;
     MouseMoveCallback mouseMoveCallback;
     MouseScrollCallback mouseScrollCallback;
+    WindowResizeCallback windowResizeCallback;
+    FramebufferResizeCallback framebufferResizeCallback;
 }
 
 interface Window {
@@ -78,6 +82,8 @@ class GLFWWindow : Window {
         glfwSetMouseButtonCallback(handle, &mouseCallback);
         glfwSetCursorPosCallback(handle, &mouseMoveCallback);
         glfwSetScrollCallback(handle, &mouseScrollCallback);
+        glfwSetWindowSizeCallback(handle, &windowResizeCallback);
+        glfwSetFramebufferSizeCallback(handle, &framebufferSizeCallback);
     }
 
     ~this() {
@@ -169,6 +175,24 @@ class GLFWWindow : Window {
         GLFWWindow win = cast(GLFWWindow) glfwGetWindowUserPointer(w);
         try {
             win.callbacks.mouseScrollCallback(cast(int) x, cast(int) y);
+        } catch (Exception e) {
+            callbackThrowing = e;
+        }
+    }
+
+    private static extern (C) void windowResizeCallback(GLFWwindow* w, int x, int y) nothrow {
+        GLFWWindow win = cast(GLFWWindow) glfwGetWindowUserPointer(w);
+        try {
+            win.callbacks.windowResizeCallback(x, y);
+        } catch (Exception e) {
+            callbackThrowing = e;
+        }
+    }
+    
+    private static extern (C) void framebufferSizeCallback(GLFWwindow* w, int x, int y) nothrow {
+        GLFWWindow win = cast(GLFWWindow) glfwGetWindowUserPointer(w);
+        try {
+            win.callbacks.framebufferResizeCallback(x, y);
         } catch (Exception e) {
             callbackThrowing = e;
         }

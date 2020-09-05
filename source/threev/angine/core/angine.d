@@ -19,7 +19,7 @@ private struct ShaderCollection {
     Shader textBatch;
 }
 
-class Angine {
+final class Angine {
     SceneManager sceneManager;
     Window window;
     ShaderCollection shaders;
@@ -29,16 +29,16 @@ class Angine {
     TextureBatch batch;
 
     this(AngineConfig config) {
-        window = new GLFWWindow(config.windowConfig, WindowEventCallbacks(&keyCallback,
-                &mouseCallback, &mouseMoveCallback, &mouseScrollCallback));
+        window = new GLFWWindow(config.windowConfig,
+                WindowEventCallbacks(&keyCallback, &mouseCallback, &mouseMoveCallback,
+                    &mouseScrollCallback, &windowResizeCallback, &framebufferResizeCallback));
         sceneManager = new SceneManager();
         loadGl(window.loader);
 
         shaders.textureBatch = new Shader(vTex, fTex);
         shaders.textBatch = new Shader(vTex, fText);
 
-        shaders.textureBatch.sendVec2("viewportSize", window.width, window.height);
-        shaders.textBatch.sendVec2("viewportSize", window.width, window.height);
+        framebufferResizeCallback(config.windowConfig.width, config.windowConfig.height);
 
         batch = new TextureBatch(5000, shaders.textureBatch, shaders.textBatch);
         batch.transparency = true;
@@ -83,6 +83,18 @@ class Angine {
 
     void mouseScrollCallback(int x, int y) {
         sceneManager.dispatchOnMouseScroll(Vec(x, y), eventState.mods);
+    }
+
+    void windowResizeCallback(int w, int h) {
+    }
+
+    void framebufferResizeCallback(int w, int h) {
+        import std : writeln;
+
+        writeln(w, " ", h);
+        setViewport(w, h);
+        shaders.textureBatch.sendVec2("viewportSize", cast(float) w, cast(float) h);
+        shaders.textBatch.sendVec2("viewportSize", cast(float) w, cast(float) h);
     }
 
     private void handleEvents() {

@@ -138,6 +138,8 @@ struct Vec {
     }
 
     void rotate(float val) {
+        if (val == 0)
+            return;
         immutable new_x = cos(val) * x - sin(val) * y;
         immutable new_y = sin(val) * x + cos(val) * y;
         x = new_x;

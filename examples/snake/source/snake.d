@@ -325,6 +325,6 @@ final class Snake : AngineScene {
 }
 
 void main() {
-    Angine a = new Angine(AngineConfig());
+    Angine a = new Angine(AngineConfig(WindowConfig(799, 600)));
     a.launch!Snake;
 }
