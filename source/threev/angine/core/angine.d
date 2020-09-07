@@ -38,7 +38,7 @@ final class Angine {
         shaders.textureBatch = new Shader(vTex, fTex);
         shaders.textBatch = new Shader(vTex, fText);
 
-        framebufferResizeCallback(config.windowConfig.width, config.windowConfig.height);
+        framebufferResizeCallback(window.width, window.height);
 
         batch = new TextureBatch(5000, shaders.textureBatch, shaders.textBatch);
         batch.transparency = true;
@@ -89,9 +89,7 @@ final class Angine {
     }
 
     void framebufferResizeCallback(int w, int h) {
-        import std : writeln;
-
-        writeln(w, " ", h);
+        
         setViewport(w, h);
         shaders.textureBatch.sendVec2("viewportSize", cast(float) w, cast(float) h);
         shaders.textBatch.sendVec2("viewportSize", cast(float) w, cast(float) h);

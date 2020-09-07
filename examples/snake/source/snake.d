@@ -33,6 +33,8 @@ final class Snake : AngineScene {
     float timeAcc = 0;
     float tickInterval = 0.4;
 
+    Entity e;
+
     this(Angine a) {
         super(a);
         apple = randomApplePos();
@@ -50,7 +52,7 @@ final class Snake : AngineScene {
 
         head = SnakePart(true, randomPos(), randomOrientation());
         tail = SnakePart(true, head.pos - vecFromOrientation(head.o), head.o);
-
+        e = new Entity();
         growSnake();
     }
 
@@ -325,6 +327,7 @@ final class Snake : AngineScene {
 }
 
 void main() {
-    Angine a = new Angine(AngineConfig(WindowConfig(799, 600)));
+    AngineConfig config = AngineConfig();
+    Angine a = new Angine(config);
     a.launch!Snake;
 }

@@ -61,10 +61,15 @@ class GLFWWindow : Window {
 
         if (config.fullscreen) {
             GLFWmonitor* monitor = getMonitorFromIndex(config.monitorIndex);
+            const mode = glfwGetVideoMode(monitor);
+            glfwWindowHint(GLFW_RED_BITS, mode.redBits);
+            glfwWindowHint(GLFW_GREEN_BITS, mode.greenBits);
+            glfwWindowHint(GLFW_BLUE_BITS, mode.blueBits);
+            glfwWindowHint(GLFW_REFRESH_RATE, mode.refreshRate);
+
             if (config.width == 0 && config.height == 0) {
-                int width, height;
-                glfwGetMonitorWorkarea(monitor, null, null, &width, &height);
-                handle = glfwCreateWindow(width, height, toStringz(config.appName), monitor, null);
+                handle = glfwCreateWindow(mode.width, mode.height,
+                        toStringz(config.appName), monitor, null);
             } else {
                 handle = glfwCreateWindow(config.width, config.height,
                         toStringz(config.appName), monitor, null);
@@ -188,7 +193,7 @@ class GLFWWindow : Window {
             callbackThrowing = e;
         }
     }
-    
+
     private static extern (C) void framebufferSizeCallback(GLFWwindow* w, int x, int y) nothrow {
         GLFWWindow win = cast(GLFWWindow) glfwGetWindowUserPointer(w);
         try {
