@@ -1,6 +1,7 @@
 module snake;
 
-import threev.angine;
+import angine;
+import angine.physics.shape.shape;
 import std;
 
 final class Snake : AngineScene {
@@ -33,8 +34,6 @@ final class Snake : AngineScene {
     float timeAcc = 0;
     float tickInterval = 0.4;
 
-    Entity e;
-
     this(Angine a) {
         super(a);
         apple = randomApplePos();
@@ -42,17 +41,17 @@ final class Snake : AngineScene {
         courier = new Font("assets/courier.ttf", 40);
         snakeTex = new Texture(TextureFilter.Nearest, snakeImg.width,
                 snakeImg.height, snakeImg.format, snakeImg.data.ptr);
-        snakeHead = snakeTex.subTextureOf(Rect(0, 0, 32, 32));
-        snakeBody = snakeTex.subTextureOf(Rect(32, 0, 32, 32));
-        snakeTail = snakeTex.subTextureOf(Rect(64, 0, 32, 32));
-        appleTex = snakeTex.subTextureOf(Rect(96, 0, 32, 32));
-        cellTex = snakeTex.subTextureOf(Rect(128, 0, 32, 32));
-        gameOverRect = snakeTex.subTextureOf(Rect(160, 0, 1, 1));
+        snakeHead = snakeTex.subTextureOf(new Rect(0, 0, 32, 32));
+        snakeBody = snakeTex.subTextureOf(new Rect(32, 0, 32, 32));
+        snakeTail = snakeTex.subTextureOf(new Rect(64, 0, 32, 32));
+        appleTex = snakeTex.subTextureOf(new Rect(96, 0, 32, 32));
+        cellTex = snakeTex.subTextureOf(new Rect(128, 0, 32, 32));
+        gameOverRect = snakeTex.subTextureOf(new Rect(160, 0, 1, 1));
         snake.reserve(cast(int)(gridSize.w * gridSize.h) / 3);
 
         head = SnakePart(true, randomPos(), randomOrientation());
         tail = SnakePart(true, head.pos - vecFromOrientation(head.o), head.o);
-        e = new Entity();
+
         growSnake();
     }
 
@@ -67,42 +66,42 @@ final class Snake : AngineScene {
         }
     }
 
-    override void draw(FrameInfo i) {
+    override void draw(FrameInfo i, GraphicsRenderer renderer) {
         for (float x = 0; x < gridSize.w; x++) {
             for (float y = 0; y < gridSize.h; y++) {
-                drawTexture(cellTex, Vec(x, y) * cellSize + centeringOffset);
+                renderer.drawTexture(cellTex, Vec(x, y) * cellSize + centeringOffset);
             }
         }
 
-        drawTexture(snakeHead, head.pos * cellSize + Vec(16,
+        renderer.drawTexture(snakeHead, head.pos * cellSize + Vec(16,
                 16) + centeringOffset, Vec(1), Vec(16, 16), rotateFromOrientation(head.o));
-        drawTexture(snakeTail, tail.pos * cellSize + Vec(16,
+        renderer.drawTexture(snakeTail, tail.pos * cellSize + Vec(16,
                 16) + centeringOffset, Vec(1), Vec(16, 16), rotateFromOrientation(tail.o));
 
         foreach (part; snake) {
-            drawTexture(part.tail ? snakeTail : snakeBody,
+            renderer.drawTexture(part.tail ? snakeTail : snakeBody,
                     part.pos * cellSize + Vec(16, 16) + centeringOffset, Vec(1),
                     Vec(16, 16), rotateFromOrientation(part.o));
         }
 
-        drawTexture(appleTex, apple * cellSize + centeringOffset);
+        renderer.drawTexture(appleTex, apple * cellSize + centeringOffset);
 
         if (gameOver) {
-            drawTexture(gameOverRect, Vec(), Vec(windowSize.w, windowSize.h));
+            renderer.drawTexture(gameOverRect, Vec(), Vec(windowSize.w, windowSize.h));
             Vec gameOverStringSize = courier.stringSize("GAME OVER ! (Press R to retry)");
-            drawString(courier, "GAME OVER ! (Press R to retry)", Color.white,
+            renderer.drawString(courier, "GAME OVER ! (Press R to retry)", Color.white,
                     Vec(windowSize.w, windowSize.h) / 2, Vec(1), gameOverStringSize / 2, 0);
         }
 
         if (pause && !gameOver) {
-            drawTexture(gameOverRect, Vec(), Vec(windowSize.w, windowSize.h));
+            renderer.drawTexture(gameOverRect, Vec(), Vec(windowSize.w, windowSize.h));
             Vec pauseStringSize = courier.stringSize("PAUSE");
-            drawString(courier, "PAUSE", Color.white, Vec(windowSize.w,
+            renderer.drawString(courier, "PAUSE", Color.white, Vec(windowSize.w,
                     windowSize.h) / 2 - pauseStringSize / 2);
         }
 
         Vec scoreStringSize = courier.stringSize(format("Score: %s", score));
-        drawString(courier, format("Score: %s", score), Color.white,
+        renderer.drawString(courier, format("Score: %s", score), Color.white,
                 Vec(windowSize.w / 2 - scoreStringSize.x / 2, 10));
     }
 
@@ -327,7 +326,5 @@ final class Snake : AngineScene {
 }
 
 void main() {
-    AngineConfig config = AngineConfig();
-    Angine a = new Angine(config);
-    a.launch!Snake;
+    Angine.launch!Snake(AngineConfig());
 }
