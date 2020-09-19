@@ -8,7 +8,8 @@ enum DrawPrimitive {
     TriangleStrip = GL_TRIANGLE_STRIP,
     LineStrip = GL_LINE_STRIP,
     Lines = GL_LINES,
-    Triangles = GL_TRIANGLES
+    Triangles = GL_TRIANGLES,
+    LineLoop = GL_LINE_LOOP
 }
 
 private bool alpha_blending_enabled = false;

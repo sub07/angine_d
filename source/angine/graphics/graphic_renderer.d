@@ -5,10 +5,25 @@ import angine.maths;
 
 class GraphicsRenderer {
     TextureBatch tBatch;
+    ShapeRenderer shapeRenderer;
 
-    this(Shader texture, Shader text) {
+    this(Shader texture, Shader text, Shader shape) {
         tBatch = new TextureBatch(5000, texture, text);
+        shapeRenderer = new ShapeRenderer(shape);
         tBatch.transparency = true;
+    }
+
+    void rect(float x, float y, float w, float h) {
+        shapeRenderer.addVertex(Vec(x, y));
+        shapeRenderer.addVertex(Vec(x + w, y));
+        shapeRenderer.addVertex(Vec(x + w, y + h));
+        shapeRenderer.addVertex(Vec(x, y + h));
+
+        shapeRenderer.flush();
+    }
+
+    void setShapeColor(Color c) {
+        shapeRenderer.color = c;
     }
 
     void drawTexture(SubTexture t, Vec translate = Vec(), Vec scale = Vec(1),

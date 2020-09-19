@@ -8,6 +8,6 @@ abstract class Shape {
     public bool contains(Vec pos);
 
     protected Vec transformed(Vec pos) {
-        return transform.transform(pos);
+        return transform.apply(pos);
     }
 }

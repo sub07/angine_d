@@ -1,0 +1,2 @@
+module angine.extensions.entity;
+

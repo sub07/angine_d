@@ -86,7 +86,7 @@ class Font {
         float top = 0;
         float w = 0;
         for (int i = 0; i < s.length; i++) {
-            auto g = glyphs[s[i]];
+            const g = glyphs[s[i]];
             w += g.advance.x;
             if (g.offset.y > top)
                 top = g.offset.y;

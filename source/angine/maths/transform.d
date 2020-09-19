@@ -24,7 +24,7 @@ struct Transform {
         this.origin += origin;
     }
 
-    public Vec transform(Vec pos) {
+    public Vec apply(Vec pos) {
         pos -= origin;
         pos *= scale;
         pos.rotate(rotate);

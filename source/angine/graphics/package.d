@@ -9,3 +9,5 @@ public import angine.graphics.subtexture;
 public import angine.graphics.primitive;
 public import angine.graphics.mesh;
 public import angine.graphics.graphic_renderer;
+public import angine.graphics.shape_renderer;
+public import angine.graphics.shape_shaders;

@@ -8,6 +8,7 @@ import angine.core.time;
 
 import angine.graphics.primitive;
 import angine.graphics.batch_shaders;
+import angine.graphics.shape_shaders;
 import angine.graphics.graphic_renderer;
 
 import angine.maths;
@@ -21,6 +22,7 @@ private struct EventState {
 private struct ShaderCollection {
     Shader textureBatch;
     Shader textBatch;
+    Shader shape;
 }
 
 final class Angine {
@@ -40,10 +42,11 @@ final class Angine {
 
         shaders.textureBatch = new Shader(vTex, fTex);
         shaders.textBatch = new Shader(vTex, fText);
+        shaders.shape = new Shader(shapeVertexShader, shapeFragmentShader);
 
         framebufferResizeCallback(window.width, window.height);
 
-        renderer = new GraphicsRenderer(shaders.textureBatch, shaders.textBatch);
+        renderer = new GraphicsRenderer(shaders.textureBatch, shaders.textBatch, shaders.shape);
         setClearColor(0, 0, 0, 1);
     }
 
@@ -95,6 +98,7 @@ final class Angine {
         setViewport(w, h);
         shaders.textureBatch.sendVec2("viewportSize", cast(float) w, cast(float) h);
         shaders.textBatch.sendVec2("viewportSize", cast(float) w, cast(float) h);
+        shaders.shape.sendVec2("viewportSize", cast(float) w, cast(float) h);
     }
 
     private void handleEvents() {
