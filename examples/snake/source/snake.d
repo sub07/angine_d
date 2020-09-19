@@ -103,7 +103,6 @@ final class Snake : AngineScene {
         Vec scoreStringSize = courier.stringSize(format("Score: %s", score));
         renderer.drawString(courier, format("Score: %s", score), Color.white,
                 Vec(windowSize.w / 2 - scoreStringSize.x / 2, 10));
-
     }
 
     override void onKeyDown(Key key, Modifiers mods) {
